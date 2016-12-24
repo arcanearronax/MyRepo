@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# arcanearronax
+# 12/24/2016
+
 ####################################################################
 ##	BBB	  L		   A	 CCCC	K  K  JJJJJ	   A	 CCCC	K  K  ##
 ##	B  B  L		  A	A	C	 C	K K		J	  A A	C	 C	K K	  ##
@@ -42,10 +45,14 @@ while play is True:
 	blackjack.bet(player, input('What would you like to bet?\n'))
 
 	# Determine winner
+	dealer.reveal(shoe)
+	blackjack.winner(dealer, player)
 
 	# Keep playing
 	play = False
 
+print(blackjack.winner)
+print('Program Complete. Testing Below.')
 print(player.getChipCount())
 print("Player: {}".format(player.hand))
 print("Dealer: {} {}".format(str(dealer.hand[0]), str(dealer.hand[1])))

@@ -1,4 +1,8 @@
-#!/usr/bin/python3 
+#!/usr/bin/python3
+
+# arcanearronax
+# 12/24/2016
+ 
 import random as r
 
 # This is the class file for the blackjack program
@@ -14,6 +18,7 @@ class BlackJack:
 	maxbet = 500
 
 	pot = 0
+	winner = ''
 
 	def dealCards(shoe, player):
 		player.hand.append(shoe[0])
@@ -28,10 +33,23 @@ class BlackJack:
 		player.chipcount = BlackJack.defaultchips
 
 	def bet(self, player, temp):
-		try:
-			chips = int(temp)
-		BlackJack.pot = BlackJack.pot + chips
+		chips = int(temp)
+		self.pot = self.pot + chips
 		player.chipcount -= chips
+
+	def winner(self, dealer, player):
+		if dealer.didbust() and player.didbust():
+			self.winner = Player.bust()
+		elif dealer.didbust():
+			self.winner = player
+		elif player.didbust():
+			self.winner = dealer
+		elif player.score() > dealer.score():
+			self.winner = player
+		elif player.score() < dealer.score():
+			self.winner = dealer
+		else:
+			self.winner = Player.draw()
 
 # Hopefully this time the cards will fucking work...
 class Card:
@@ -144,7 +162,38 @@ class Player(BlackJack):
 	def showCards(self):
 		print("Player: {} {}".format(self.hand[0], self.hand[1]))
 
+	def didbust(self):
+		if self.score() > 21:
+			return True
+		else:
+			return False
+
+	def bust():
+		return Player.__init__(Player, 'BUST')
+
+	def draw():
+		return Player.__init__(Player, 'DRAW')
+
+	def score(player):
+		total = 0
+		for card in player.hand:
+			if card.face in ['King', 'Queen', 'Jack']:
+				total += 10
+			else:
+				try:
+					total += int(card)
+				except TypeError:
+					if card == 'Ace':
+						if total > 11:
+							total += 1
+						else:
+							total += 11
+		return total
+
 class Dealer(Player):
 	def __init__(self):
 		Player.__init__(self, 'Dealer')
 		self.chipcount = BlackJack.dealerchips
+
+	def reveal(self, shoe):
+		self.hand[1] = Card.draw(shoe)
