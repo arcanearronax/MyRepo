@@ -13,46 +13,28 @@
 
 # This is just a blackjack game from practice purposes.
 # It should be able to play one player against a dealer.
-import os
 from Blackjack_class import *
-
-os.system('clear')
 
 # Instantiate BlackJack
 blackjack = BlackJack()
 
-print("Welcome to Black Jack")
+#print("Welcome to Black Jack")
 
 # Player stuff
-player = Player(input('What is your name?\n'))
-
-# Card stuff
-shoe = Card.shuffle(Card.getDeck(BlackJack.numdecks))
+#player = Player(input('What is your name?\n'))
+blackjack.createPlayers()
 
 # Dealer and chip shit
-dealer = Dealer()
+#dealer = Dealer()
 BlackJack.distribChips(player)
 
 play = True
 
 while play is True:
-	# Deal cards
-	BlackJack.dealCards(shoe, player)
-	BlackJack.dealCards(shoe, dealer)
-
-	# Player moves
-	player.showCards()
-	blackjack.bet(player, input('What would you like to bet?\n'))
-
-	# Determine winner
-	dealer.reveal(shoe)
-	blackjack.winner(dealer, player)
-
-	# Keep playing
-	play = False
-
+    # Deal cards
+    blackjack.dealCards()
+    
+    play = False
+    
 print(blackjack.winner)
 print('Program Complete. Testing Below.')
-print(player.getChipCount())
-print("Player: {}".format(player.hand))
-print("Dealer: {} {}".format(str(dealer.hand[0]), str(dealer.hand[1])))

@@ -4,11 +4,18 @@
 # 12/24/2016
  
 import random as r
+import os
 
 # This is the class file for the blackjack program
+# It will manage methods that require unrelated classes
 class BlackJack:
+
+	# Set up the terminal when the class is instantiated
+	def __init__(self):
+		os.system('clear')
+		print('Welcome to Black Jack.')
 	
-	# Values that may need to be used by other programs
+	# Values that may need to be used and modified easily
 	numdecks = 4
 	defaultchips = 1000
 	dealerchips = 10000
@@ -17,26 +24,42 @@ class BlackJack:
 	minbet = 50
 	maxbet = 500
 
+	# Values that will be modified by methods
 	pot = 0
 	winner = ''
+	players = []
+	dealer = Dealer()
+	shoe = Card.shuffle(Card.getDeck(numdecks))
 
-	def dealCards(shoe, player):
-		player.hand.append(shoe[0])
-		if type(player) == Player:
-			player.hand.append(shoe[1])
-		else:
-			player.hand.append(Card())
-		shoe.pop(0)
-		shoe.pop(1)
+	# Currently the adds a single player, but it should prompt for a
+	# specific number of players, then create them
+	def createPlayers(self):
+		self.players.append(Player(input('What is your name?\n'))
 
+	# Remove a card from shoe and give it to player
+    def dealCards(self):
+        self.players[0].hand.append(self.shoe[0])
+        self.players[0].hand.append(self.shoe[1])
+        self.dealer.hand.append(self.shoe[2])
+        self.dealer.hand.append(Card())
+		self.shoe.pop(0)
+		self.shoe.pop(1)
+        self.shoe.pop(2)
+
+	# Currently gives the solo player chips, but should give multiple
+	# players chips.
 	def distribChips(player):
 		player.chipcount = BlackJack.defaultchips
 
+	# This currently does not make any checks to see if the bet amount
+	# is valid, but it should do so and raise errors appropriately
 	def bet(self, player, temp):
 		chips = int(temp)
 		self.pot = self.pot + chips
 		player.chipcount -= chips
 
+	# This currently checks winner as player vs dealer but should do
+	# blackjack.dealer vs blackjack.players
 	def winner(self, dealer, player):
 		if dealer.didbust() and player.didbust():
 			self.winner = Player.bust()
@@ -50,22 +73,55 @@ class BlackJack:
 			self.winner = dealer
 		else:
 			self.winner = Player.draw()
+		print('{} is the winner.'.format(self.winner))
 
-# Hopefully this time the cards will fucking work...
+	# Currently prompts the single user for a turn but should prompt
+	# blackjack.players sequentially
+	def turn(self, player, shoe):
+		self.bet(player, input('What would you like to bet?\n'))
+		cont = True
+		while cont == True:
+			print('Player hand: {}'.format(player.hand))
+			if input('Would you like another card?\n') == 'y':
+				player.hand.append(Card.draw(shoe))
+			else: cont = False
+
+	# Currently checks with the single player to see if they want to
+	# play another hand
+	def keepplaying(player):
+		print('You have {} chips.\n'.format(player.chipcount))
+		if input('Would you like to keep playing?\n') == 'y':
+			return True
+		else:
+			return False
+			print('Thank you for playing.\n')
+
+	# Check to see if the player's score is over 21
+	def didbust(player):
+		if player.score() > 21:
+			return True
+		else:
+			return False
+
+# Contains card attributes and mathods for handling the object
 class Card:
+	# This is equivalent to a blank card
 	def __init__(self):
 		self.face = ''
 		self.suit = ''
 
+	# Need to be able to print out the regular card name
 	def __str__(self):
 		if self.face is '' or self.suit is '':
 			return "blank"
 		else:
 			return self.face + " of " + self.suit
 	
+	# In case we need to see the oject itself
 	def __repr__(self):
 		return '({},{})'.format(self.face, self.suit)
 	
+	# To be used when using a generator to get cards
 	def convCard(face, suit):
 		card = Card()
 
@@ -91,6 +147,7 @@ class Card:
 
 		return card
 
+	# Generate a list of cards as if they were decks from packs
 	def getDeck(numdecks):
 		temp = []
 
@@ -109,6 +166,7 @@ class Card:
 		return temp
 
 	# The cards variable is meant to be a list of Card()
+	# This will reorder the list of cards using an RNG
 	def shuffle(cards):
 		count = len(cards)
 		temp = []
@@ -126,6 +184,7 @@ class Card:
 
 		return shuffled
 		
+	# take the bottom card from the shoe/top from the deck (index 0)
 	def draw(deck):
 		card = deck[0]
 		deck.pop(0)
@@ -133,47 +192,37 @@ class Card:
 		
 # This class contains player variables and related functions
 class Player(BlackJack):
+	# Require the player's name be provided when creating the player
 	def __init__(self, name):
 		self.name = name
 		self.chipcount = 0
 		self.hand = []
 
+	# Just return the player's name
 	def __str__(self):
 		return self.name
 
+	# Print out the player's attribute values as a set of coordinates
 	def __repr__(self):
-		return "({},{})".format(self.name, self.chipcount)
+		return "({},{},{})".format(self.name, self.chipcount, self.hand)
 
-	def setName(self, name):
-		self.name = name
-
-	def getName(self):
-		return self.name
-
+	# Return the player's chipcount
 	def getChipCount(self):
 		return self.chipcount
-	
-	def newPlayer(name, chipcount):
-		temp = Player()
-		temp.name = name
-		temp.chipcount = chipcount
-		return temp
 
+	# Print the player's cards to the terminal
 	def showCards(self):
-		print("Player: {} {}".format(self.hand[0], self.hand[1]))
+		print("{}: {} {}".format(self.name, self.hand[0], self.hand[1]))
 
-	def didbust(self):
-		if self.score() > 21:
-			return True
-		else:
-			return False
-
+	# Return a player with the name BUST
 	def bust():
 		return Player.__init__(Player, 'BUST')
 
+	# Return a player with the name DRAW
 	def draw():
 		return Player.__init__(Player, 'DRAW')
 
+	# Calculate the player's score
 	def score(player):
 		total = 0
 		for card in player.hand:
@@ -190,10 +239,13 @@ class Player(BlackJack):
 							total += 11
 		return total
 
+# Dealer should be created with the same info repeatedly, subclass it
 class Dealer(Player):
+	# Automatically build the dealer
 	def __init__(self):
 		Player.__init__(self, 'Dealer')
 		self.chipcount = BlackJack.dealerchips
 
+	# Reveal the dealer's face down card
 	def reveal(self, shoe):
 		self.hand[1] = Card.draw(shoe)
