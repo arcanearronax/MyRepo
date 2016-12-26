@@ -2,7 +2,7 @@
 
 # arcanearronax
 # 12/24/2016
- 
+
 import random as r
 import os
 
@@ -14,8 +14,11 @@ class BlackJack:
 	def __init__(self):
 		os.system('clear')
 		print('Welcome to Black Jack.')
-	
-	# Values that may need to be used and modified easily
+		self.pot = 0
+		self.dealer = Dealer()
+		self.shoe = Card.shuffle(Card.getDeck(self.numdecks))
+
+	# Values that may need to be used and modified manually
 	numdecks = 4
 	defaultchips = 1000
 	dealerchips = 10000
@@ -25,38 +28,39 @@ class BlackJack:
 	maxbet = 500
 
 	# Values that will be modified by methods
-	pot = 0
-	winner = ''
 	players = []
-	dealer = Dealer()
-	shoe = Card.shuffle(Card.getDeck(numdecks))
+	shoe = []
+	blindindex = 0
 
 	# Currently the adds a single player, but it should prompt for a
 	# specific number of players, then create them
 	def createPlayers(self):
-		self.players.append(Player(input('What is your name?\n'))
+		print('How many people will be playing?')
+		for i in range(int(input())):
+			self.players.append(Player(input('Player {} Name: '.format(i+1))))
 
 	# Remove a card from shoe and give it to player
-    def dealCards(self):
-        self.players[0].hand.append(self.shoe[0])
-        self.players[0].hand.append(self.shoe[1])
-        self.dealer.hand.append(self.shoe[2])
-        self.dealer.hand.append(Card())
-		self.shoe.pop(0)
-		self.shoe.pop(1)
-        self.shoe.pop(2)
+	def dealCards(self):
+		for i in range(2):
+			for player in self.players:
+				player.hand.append(Card.draw(self.shoe))
+			self.dealer.hand.append(Card.draw(self.shoe))
 
 	# Currently gives the solo player chips, but should give multiple
 	# players chips.
-	def distribChips(player):
-		player.chipcount = BlackJack.defaultchips
+	def distribChips(self):
+		for player in self.players:
+			player.chipcount = self.defaultchips
 
 	# This currently does not make any checks to see if the bet amount
 	# is valid, but it should do so and raise errors appropriately
-	def bet(self, player, temp):
-		chips = int(temp)
-		self.pot = self.pot + chips
-		player.chipcount -= chips
+	def bet(self):
+		for player in self.players:
+			try:
+				chips = int(input(("{}\'s bet: ".format(player.name))))
+			except TypeError:
+				print("Invalid input. Please try again.")
+				bet(self)
 
 	# This currently checks winner as player vs dealer but should do
 	# blackjack.dealer vs blackjack.players
@@ -116,11 +120,11 @@ class Card:
 			return "blank"
 		else:
 			return self.face + " of " + self.suit
-	
+
 	# In case we need to see the oject itself
 	def __repr__(self):
 		return '({},{})'.format(self.face, self.suit)
-	
+
 	# To be used when using a generator to get cards
 	def convCard(face, suit):
 		card = Card()
@@ -171,10 +175,10 @@ class Card:
 		count = len(cards)
 		temp = []
 		shuffled = []
-		
+
 		for i in range(count):
 			temp.append(i)
-		
+
 		while len(cards) > 1:
 			#print("length: {}".format(len(cards)))
 			rand = r.randint(0, len(cards) - 1)
@@ -183,13 +187,13 @@ class Card:
 			cards.remove(cards[rand])
 
 		return shuffled
-		
+
 	# take the bottom card from the shoe/top from the deck (index 0)
 	def draw(deck):
 		card = deck[0]
 		deck.pop(0)
 		return card
-		
+
 # This class contains player variables and related functions
 class Player(BlackJack):
 	# Require the player's name be provided when creating the player
@@ -197,6 +201,8 @@ class Player(BlackJack):
 		self.name = name
 		self.chipcount = 0
 		self.hand = []
+		self.winner = False
+		self.pot = 0
 
 	# Just return the player's name
 	def __str__(self):
@@ -249,3 +255,10 @@ class Dealer(Player):
 	# Reveal the dealer's face down card
 	def reveal(self, shoe):
 		self.hand[1] = Card.draw(shoe)
+
+# Methods that could be useful for testing and debugging
+class Debug:
+	def printAllHands(blackjack):
+		for player in blackjack.players:
+			print('{}: {}'.format(player.name, player.hand))
+		print('{}: {}'.format('dealer', blackjack.dealer.hand))

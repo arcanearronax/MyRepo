@@ -15,26 +15,21 @@
 # It should be able to play one player against a dealer.
 from Blackjack_class import *
 
-# Instantiate BlackJack
+# Build the game
 blackjack = BlackJack()
-
-#print("Welcome to Black Jack")
-
-# Player stuff
-#player = Player(input('What is your name?\n'))
 blackjack.createPlayers()
-
-# Dealer and chip shit
-#dealer = Dealer()
-BlackJack.distribChips(player)
+blackjack.distribChips()
 
 play = True
 
 while play is True:
     # Deal cards
     blackjack.dealCards()
-    
+    blackjack.bet()
+
+    Debug.printAllHands(blackjack)
+
     play = False
-    
+
 print(blackjack.winner)
 print('Program Complete. Testing Below.')
