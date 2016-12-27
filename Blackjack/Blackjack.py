@@ -25,7 +25,10 @@ play = True
 while play is True:
     # Deal cards
     blackjack.dealCards()
-    blackjack.bet()
+    blackjack.displayCards()
+
+    # Take bets and make moves
+    blackjack.turn()
 
     Debug.printAllHands(blackjack)
 

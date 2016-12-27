@@ -6,15 +6,16 @@
 import random as r
 import os
 
-# This is the class file for the blackjack program
-# It will manage methods that require unrelated classes
+# This class will contain all methods needed to write a blackjack game.
+# It will handle everything dealing with other classes. Those classes can still
+# be used if the writer wants more manual control over the game
 class BlackJack:
-
-	# Set up the terminal when the class is instantiated
+	# Set up the terminal when the instance is created
 	def __init__(self):
 		os.system('clear')
 		print('Welcome to Black Jack.')
 		self.pot = 0
+		# Go ahead and build these since there's not reason not to now
 		self.dealer = Dealer()
 		self.shoe = Card.shuffle(Card.getDeck(self.numdecks))
 
@@ -22,48 +23,57 @@ class BlackJack:
 	numdecks = 4
 	defaultchips = 1000
 	dealerchips = 10000
-	smallblind = 50
-	largeblind = 100
 	minbet = 50
 	maxbet = 500
 
 	# Values that will be modified by methods
 	players = []
 	shoe = []
-	blindindex = 0
 
-	# Currently the adds a single player, but it should prompt for a
-	# specific number of players, then create them
+	# Prompt for the number of player and create them sequentially
 	def createPlayers(self):
 		print('How many people will be playing?')
+		# Need to have some verification to ensure the user input is an int
 		for i in range(int(input())):
 			self.players.append(Player(input('Player {} Name: '.format(i+1))))
 
-	# Remove a card from shoe and give it to player
+	# Deal cards out to the players and dealers
+	# Should probably update the player class to have it's own draw method
 	def dealCards(self):
 		for i in range(2):
 			for player in self.players:
 				player.hand.append(Card.draw(self.shoe))
 			self.dealer.hand.append(Card.draw(self.shoe))
 
-	# Currently gives the solo player chips, but should give multiple
-	# players chips.
+	# Sets each player to the default chip count
 	def distribChips(self):
 		for player in self.players:
 			player.chipcount = self.defaultchips
 
-	# This currently does not make any checks to see if the bet amount
-	# is valid, but it should do so and raise errors appropriately
-	def bet(self):
+	# This is close to working as I want, need to raise errors appropriately
+	def executeBet(player):
+		ans = input(("{}\'s bet: ".format(player.name)))
+		try:
+			chips = int(ans)
+			if player.chipcount >= chips:
+				player.pot += chips
+				player.chipcount -= chips
+			else:
+				print('Insufficient chips to place bet')
+				BlackJack.executeBet(player)
+		except ValueError:
+			print("Invalid input. Please try again.")
+			BlackJack.executeBet(player)
+
+	# Show the cards for all players and dealer
+	def displayCards(self):
 		for player in self.players:
-			try:
-				chips = int(input(("{}\'s bet: ".format(player.name))))
-			except TypeError:
-				print("Invalid input. Please try again.")
-				bet(self)
+			print("{}'s Hand: {}".format(player.name, player.hand))
+		print("{}'s Hand: {}".format(self.dealer.name, self.dealer.hand))
 
 	# This currently checks winner as player vs dealer but should do
 	# blackjack.dealer vs blackjack.players
+	# This will most likely have to move to the Player class
 	def winner(self, dealer, player):
 		if dealer.didbust() and player.didbust():
 			self.winner = Player.bust()
@@ -79,16 +89,12 @@ class BlackJack:
 			self.winner = Player.draw()
 		print('{} is the winner.'.format(self.winner))
 
-	# Currently prompts the single user for a turn but should prompt
-	# blackjack.players sequentially
-	def turn(self, player, shoe):
-		self.bet(player, input('What would you like to bet?\n'))
-		cont = True
-		while cont == True:
-			print('Player hand: {}'.format(player.hand))
-			if input('Would you like another card?\n') == 'y':
-				player.hand.append(Card.draw(shoe))
-			else: cont = False
+	# This has each player take their turn sequentially, then the dealer. It
+	# does the looping itself
+	def turn(self):
+		for player in self.players:
+			BlackJack.executeBet(player)
+			player.turn(self)
 
 	# Currently checks with the single player to see if they want to
 	# play another hand
@@ -99,13 +105,6 @@ class BlackJack:
 		else:
 			return False
 			print('Thank you for playing.\n')
-
-	# Check to see if the player's score is over 21
-	def didbust(player):
-		if player.score() > 21:
-			return True
-		else:
-			return False
 
 # Contains card attributes and mathods for handling the object
 class Card:
@@ -165,8 +164,6 @@ class Card:
 			if numdecks > 0:
 				temp.append(Card.getDeck(numdecks))
 
-		#print(temp)
-
 		return temp
 
 	# The cards variable is meant to be a list of Card()
@@ -175,21 +172,17 @@ class Card:
 		count = len(cards)
 		temp = []
 		shuffled = []
-
 		for i in range(count):
 			temp.append(i)
-
 		while len(cards) > 1:
-			#print("length: {}".format(len(cards)))
 			rand = r.randint(0, len(cards) - 1)
-			#print(rand)
 			shuffled.append(cards[rand])
 			cards.remove(cards[rand])
-
 		return shuffled
 
 	# take the bottom card from the shoe/top from the deck (index 0)
 	def draw(deck):
+		#print("Deck: {}".format(deck))
 		card = deck[0]
 		deck.pop(0)
 		return card
@@ -201,8 +194,10 @@ class Player(BlackJack):
 		self.name = name
 		self.chipcount = 0
 		self.hand = []
+		self.splithand = []
 		self.winner = False
 		self.pot = 0
+		self.nomove = True
 
 	# Just return the player's name
 	def __str__(self):
@@ -245,6 +240,71 @@ class Player(BlackJack):
 							total += 11
 		return total
 
+	# Seriously...
+	def stay(self):
+		pass
+
+	# Need to fix this up a bit more
+	def hit(self, blackjack):
+		self.nomove = False
+		self.hand.append(Card.draw(blackjack.shoe))
+
+	# This needs to have more validation built into it
+	def double(self, blackjack):
+		# Need to raise an error if user has insufficient chips
+		if self.pot > self.chipcount:
+			# Need to raise an error here
+			pass
+		else:
+			self.chipcount -= self.pot
+			self.pot *= 2
+			self.nomove = False
+			self.hand.append(Card.draw(blackjack.shoe))
+
+	def split(self, blackjack):
+		if self.pot > self.chipcount:
+			# Need to raise an error here
+			pass
+		else:
+			self.splithand.append(self.hand[1])
+			self.hand.pop(1)
+			self.hand.append(Card.draw(blackjack.shoe))
+			self.splithand.append(Card.draw(blackjack.shoe))
+
+	# Needs more verification built into it
+	def getOpts(self):
+		opts = [1,0,0,0]
+		if self.nomove == True:
+			opts[2] = 1
+			if self.hand[0].face == self.hand[1]:
+				opts[3] = 1
+		if self.score() < 21:
+			opts[1] = 1
+		return opts
+
+	# May modify how I handle the available options, this doesn't feel great
+	def turn(self, blackjack):
+		opts = self.getOpts()
+		for i in range(len(opts)):
+			if opts[i] == 1:
+				if i == 0:
+					print('1. Stay')
+				if i == 1:
+					print('2. Hit')
+				if i == 2:
+					print('3. Double')
+				if i == 3:
+					print('4. Split')
+		choice = Debug.intput(input('Please enter your selection.\n'))
+		if choice == 1:
+			self.stay()
+		if choice == 2:
+			self.hit(blackjack)
+		if choice == 3:
+			self.double(blackjack)
+		if choice == 4:
+			self.split(blackjack)
+
 # Dealer should be created with the same info repeatedly, subclass it
 class Dealer(Player):
 	# Automatically build the dealer
@@ -256,8 +316,22 @@ class Dealer(Player):
 	def reveal(self, shoe):
 		self.hand[1] = Card.draw(shoe)
 
+	# The dealer will need their own turn method
+	def turn(self):
+		pass
+
 # Methods that could be useful for testing and debugging
 class Debug:
+	# Verification stuff
+	# To make sure the user input a number
+	def intput(num):
+		try:
+			num = int(num)
+		except ValueError:
+			num = Debug.intput(input('Invalid entry. Input was not a number, please try again.\n'))
+		return num
+
+	# Testing stuff
 	def printAllHands(blackjack):
 		for player in blackjack.players:
 			print('{}: {}'.format(player.name, player.hand))
