@@ -23,14 +23,17 @@ blackjack.distribChips()
 play = True
 
 while play is True:
-    # Deal cards
+    # Bet, deal, and show cards
+    #blackjack.bet()
     blackjack.dealCards()
     blackjack.displayCards()
 
-    # Take bets and make moves
+    # Make your moves
     blackjack.turn()
 
-    Debug.printAllHands(blackjack)
+    # The big question
+    blackjack.winner()
+    blackjack.revealwinners()
 
     play = False
 

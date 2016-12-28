@@ -36,6 +36,7 @@ class BlackJack:
 		# Need to have some verification to ensure the user input is an int
 		for i in range(int(input())):
 			self.players.append(Player(input('Player {} Name: '.format(i+1))))
+			self.players[i].dealer = self.dealer
 
 	# Deal cards out to the players and dealers
 	# Should probably update the player class to have it's own draw method
@@ -51,19 +52,20 @@ class BlackJack:
 			player.chipcount = self.defaultchips
 
 	# This is close to working as I want, need to raise errors appropriately
-	def executeBet(player):
-		ans = input(("{}\'s bet: ".format(player.name)))
-		try:
-			chips = int(ans)
-			if player.chipcount >= chips:
-				player.pot += chips
-				player.chipcount -= chips
-			else:
-				print('Insufficient chips to place bet')
+	def bet(self):
+		for player in self.players:
+			ans = input(("{}\'s bet: ".format(player.name)))
+			try:
+				chips = int(ans)
+				if player.chipcount >= chips:
+					player.pot += chips
+					player.chipcount -= chips
+				else:
+					print('Insufficient chips to place bet')
+					BlackJack.executeBet(player)
+			except ValueError:
+				print("Invalid input. Please try again.")
 				BlackJack.executeBet(player)
-		except ValueError:
-			print("Invalid input. Please try again.")
-			BlackJack.executeBet(player)
 
 	# Show the cards for all players and dealer
 	def displayCards(self):
@@ -71,30 +73,31 @@ class BlackJack:
 			print("{}'s Hand: {}".format(player.name, player.hand))
 		print("{}'s Hand: {}".format(self.dealer.name, self.dealer.hand))
 
-	# This currently checks winner as player vs dealer but should do
-	# blackjack.dealer vs blackjack.players
-	# This will most likely have to move to the Player class
-	def winner(self, dealer, player):
-		if dealer.didbust() and player.didbust():
-			self.winner = Player.bust()
-		elif dealer.didbust():
-			self.winner = player
-		elif player.didbust():
-			self.winner = dealer
-		elif player.score() > dealer.score():
-			self.winner = player
-		elif player.score() < dealer.score():
-			self.winner = dealer
-		else:
-			self.winner = Player.draw()
-		print('{} is the winner.'.format(self.winner))
-
 	# This has each player take their turn sequentially, then the dealer. It
 	# does the looping itself
 	def turn(self):
 		for player in self.players:
-			BlackJack.executeBet(player)
-			player.turn(self)
+			opts = player.getOpts()
+			for i in range(len(opts)):
+				if opts[i] == 1:
+					if i == 0:
+						print('1. Stay')
+					if i == 1:
+						print('2. Hit')
+					if i == 2:
+						print('3. Double')
+					if i == 3:
+						print('4. Split')
+			choice = Debug.intput(input('Please enter your selection.\n'))
+			if choice == 1:
+				player.stay()
+			if choice == 2:
+				player.hit(self.shoe)
+			if choice == 3:
+				player.double(self.shoe)
+			if choice == 4:
+				player.split(self.shoe)
+		self.dealer.turn(self.shoe)
 
 	# Currently checks with the single player to see if they want to
 	# play another hand
@@ -105,6 +108,23 @@ class BlackJack:
 		else:
 			return False
 			print('Thank you for playing.\n')
+
+	def winner(self):
+		for player in self.players:
+			player.winner()
+
+	def revealwinners(self):
+		for player in self.players:
+			if player.win == 0:
+				print("{}: Draw".format(player.name))
+			elif player.win == 1:
+				print("{}: Blackjack".format(player.name))
+			elif player.win == 2:
+				print("{}: Win".format(player.name))
+			elif player.win == 3:
+				print("{}: Lose".format(player.name))
+			elif player.win == 4:
+				print("{}: Bust".format(player.name))
 
 # Contains card attributes and mathods for handling the object
 class Card:
@@ -195,9 +215,12 @@ class Player(BlackJack):
 		self.chipcount = 0
 		self.hand = []
 		self.splithand = []
-		self.winner = False
+		self.win = 0
 		self.pot = 0
 		self.nomove = True
+		self.cont = True
+		self.blackjack = False
+		self.dealer = ''
 
 	# Just return the player's name
 	def __str__(self):
@@ -214,14 +237,6 @@ class Player(BlackJack):
 	# Print the player's cards to the terminal
 	def showCards(self):
 		print("{}: {} {}".format(self.name, self.hand[0], self.hand[1]))
-
-	# Return a player with the name BUST
-	def bust():
-		return Player.__init__(Player, 'BUST')
-
-	# Return a player with the name DRAW
-	def draw():
-		return Player.__init__(Player, 'DRAW')
 
 	# Calculate the player's score
 	def score(player):
@@ -245,12 +260,13 @@ class Player(BlackJack):
 		pass
 
 	# Need to fix this up a bit more
-	def hit(self, blackjack):
+	def hit(self, shoe):
 		self.nomove = False
-		self.hand.append(Card.draw(blackjack.shoe))
+		self.hand.append(Card.draw(shoe))
 
 	# This needs to have more validation built into it
-	def double(self, blackjack):
+	def double(self, shoe):
+		self.nomove = False
 		# Need to raise an error if user has insufficient chips
 		if self.pot > self.chipcount:
 			# Need to raise an error here
@@ -258,18 +274,18 @@ class Player(BlackJack):
 		else:
 			self.chipcount -= self.pot
 			self.pot *= 2
-			self.nomove = False
 			self.hand.append(Card.draw(blackjack.shoe))
 
-	def split(self, blackjack):
+	def split(self, shoe):
+		self.nomove = False
 		if self.pot > self.chipcount:
 			# Need to raise an error here
 			pass
 		else:
 			self.splithand.append(self.hand[1])
 			self.hand.pop(1)
-			self.hand.append(Card.draw(blackjack.shoe))
-			self.splithand.append(Card.draw(blackjack.shoe))
+			self.hand.append(Card.draw(shoe))
+			self.splithand.append(Card.draw(shoe))
 
 	# Needs more verification built into it
 	def getOpts(self):
@@ -284,26 +300,32 @@ class Player(BlackJack):
 
 	# May modify how I handle the available options, this doesn't feel great
 	def turn(self, blackjack):
-		opts = self.getOpts()
-		for i in range(len(opts)):
-			if opts[i] == 1:
-				if i == 0:
-					print('1. Stay')
-				if i == 1:
-					print('2. Hit')
-				if i == 2:
-					print('3. Double')
-				if i == 3:
-					print('4. Split')
-		choice = Debug.intput(input('Please enter your selection.\n'))
-		if choice == 1:
-			self.stay()
-		if choice == 2:
-			self.hit(blackjack)
-		if choice == 3:
-			self.double(blackjack)
-		if choice == 4:
-			self.split(blackjack)
+		pass
+
+	# win = 0 --> no winner determined/draw
+	# win = 1 --> player blackjack
+	# win = 2 --> player wins
+	# win = 3 --> dealer wins
+	def winner(self):
+		#pscore = self.score()
+		#dscore = self.dealer.score()
+		if self.blackjack == True:
+			self.win = 1
+		elif self.score() > self.dealer.score():
+			self.win = 2
+		elif self.score() < self.dealer.score():
+			self.win = 3
+
+	def soft(self, num):
+		ace = False
+		for card in self.hand:
+			if card.face == 'Ace':
+				ace = True
+				break
+		if ace == True and self.score - 11 == num:
+			return True
+		else:
+			return False
 
 # Dealer should be created with the same info repeatedly, subclass it
 class Dealer(Player):
@@ -317,8 +339,13 @@ class Dealer(Player):
 		self.hand[1] = Card.draw(shoe)
 
 	# The dealer will need their own turn method
-	def turn(self):
-		pass
+	def turn(self, shoe):
+		if self.score() == 21:
+			self.blackjack = True
+		elif self.soft(17):
+			
+
+		print("Dealer Hand: {}".format(self.hand))
 
 # Methods that could be useful for testing and debugging
 class Debug:
