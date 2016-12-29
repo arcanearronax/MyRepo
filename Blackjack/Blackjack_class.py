@@ -44,6 +44,7 @@ class BlackJack:
 		for i in range(2):
 			for player in self.players:
 				player.hand.append(Card.draw(self.shoe))
+			#BugTracing001: Is there something acting weird with draw? From:displayCards()
 			self.dealer.hand.append(Card.draw(self.shoe))
 
 	# Sets each player to the default chip count
@@ -71,32 +72,26 @@ class BlackJack:
 	def displayCards(self):
 		for player in self.players:
 			print("{}'s Hand: {}".format(player.name, player.hand))
+		# BugTracing001: dealer has decks as hands, why were they place in had?
 		print("{}'s Hand: {}".format(self.dealer.name, self.dealer.hand))
 
 	# This has each player take their turn sequentially, then the dealer. It
 	# does the looping itself
 	def turn(self):
 		for player in self.players:
-			opts = player.getOpts()
-			for i in range(len(opts)):
-				if opts[i] == 1:
-					if i == 0:
-						print('1. Stay')
-					if i == 1:
-						print('2. Hit')
-					if i == 2:
-						print('3. Double')
-					if i == 3:
-						print('4. Split')
-			choice = Debug.intput(input('Please enter your selection.\n'))
-			if choice == 1:
-				player.stay()
-			if choice == 2:
-				player.hit(self.shoe)
-			if choice == 3:
-				player.double(self.shoe)
-			if choice == 4:
-				player.split(self.shoe)
+			print("Score: {}".format(player.score()))
+			player.turn(self.shoe)
+			# Need to see if player wants another card
+			print("{}'s Hand: {}".format(player.name, player.hand))
+			while player.score() < 21:
+				print("Score1: {}".format(player.score()))
+				print('1. Stay')
+				print('2. Hit')
+				choice = Debug.intput(input('Please enter your selection.\n'))
+				if choice == 1:
+					break
+				if choice == 2:
+					player.hit(shoe)
 		self.dealer.turn(self.shoe)
 
 	# Currently checks with the single player to see if they want to
@@ -150,13 +145,13 @@ class Card:
 
 		if face is 0:
 			card.face = 'Ace'
-		elif face > 0 and face < 10:
-			card.face = str(face)
-		elif face is 10:
+		elif face > 0 and face < 9:
+			card.face = str(face + 1)
+		elif face is 9:
 			card.face = 'Jack'
-		elif face is 11:
+		elif face is 10:
 			card.face = 'Queen'
-		elif face is 12:
+		elif face is 11:
 			card.face = 'King'
 
 		if suit is 0:
@@ -177,7 +172,7 @@ class Card:
 		# I think this is like stuttering recursion
 		# Should probably rewrite this
 		while numdecks > 0:
-			for i in range(13):
+			for i in range(12):
 				for j in range(4):
 					temp.append(Card.convCard(i,j))
 			numdecks -= 1
@@ -206,6 +201,15 @@ class Card:
 		card = deck[0]
 		deck.pop(0)
 		return card
+
+	# Need a score to determine card value
+	def score(self):
+		if self.face in ['King', 'Queen', 'Jack']:
+			return 10
+		elif self.face == 'Ace':
+			return 'A'
+		else:
+			return int(self.face)
 
 # This class contains player variables and related functions
 class Player(BlackJack):
@@ -241,18 +245,19 @@ class Player(BlackJack):
 	# Calculate the player's score
 	def score(player):
 		total = 0
+		acecount = 0
 		for card in player.hand:
-			if card.face in ['King', 'Queen', 'Jack']:
-				total += 10
+			if card.score() == 'A':
+				acecount += 1
 			else:
-				try:
-					total += int(card)
-				except TypeError:
-					if card == 'Ace':
-						if total > 11:
-							total += 1
-						else:
-							total += 11
+				total += card.score()
+		# This will try to maximize the the ace contribution
+		while acecount > 0:
+			acecount -= 1
+			if acecount + total + 11 <= 21:
+				total += 11
+			else:
+				total += 1
 		return total
 
 	# Seriously...
@@ -298,10 +303,6 @@ class Player(BlackJack):
 			opts[1] = 1
 		return opts
 
-	# May modify how I handle the available options, this doesn't feel great
-	def turn(self, blackjack):
-		pass
-
 	# win = 0 --> no winner determined/draw
 	# win = 1 --> player blackjack
 	# win = 2 --> player wins
@@ -327,6 +328,28 @@ class Player(BlackJack):
 		else:
 			return False
 
+	def turn(self, shoe):
+		opts = self.getOpts()
+		for i in range(len(opts)):
+			if opts[i] == 1:
+				if i == 0:
+					print('1. Stay')
+				if i == 1:
+					print('2. Hit')
+				if i == 2:
+					print('3. Double')
+				if i == 3:
+					print('4. Split')
+		choice = Debug.intput(input('Please enter your selection.\n'))
+		if choice == 1:
+			self.stay()
+		if choice == 2:
+			self.hit(shoe)
+		if choice == 3:
+			self.double(shoe)
+		if choice == 4:
+			self.split(shoe)
+
 # Dealer should be created with the same info repeatedly, subclass it
 class Dealer(Player):
 	# Automatically build the dealer
@@ -343,7 +366,13 @@ class Dealer(Player):
 		if self.score() == 21:
 			self.blackjack = True
 		elif self.soft(17):
-			
+			self.hit(shoe)
+			#dealer.stay()
+		elif self.score() < 17:
+			while self.score() < 17:
+				self.hit(shoe)
+		elif self.score() >= 17:
+			self.stay()
 
 		print("Dealer Hand: {}".format(self.hand))
 
@@ -363,3 +392,6 @@ class Debug:
 		for player in blackjack.players:
 			print('{}: {}'.format(player.name, player.hand))
 		print('{}: {}'.format('dealer', blackjack.dealer.hand))
+
+	def spacer():
+		print("#\n#\n#\n")

@@ -20,12 +20,27 @@ blackjack = BlackJack()
 blackjack.createPlayers()
 blackjack.distribChips()
 
+card1 = Card()
+card1.face = 'King'
+card1.suit = 'Spades'
+card2 = Card()
+card2.face = '2'
+card2.suit = 'Spades'
+
+player = Player('player')
+player.hand = [card1, card2]
+
+print("SCORE: {}".format(player.score()))
+
 play = True
 
 while play is True:
     # Bet, deal, and show cards
     #blackjack.bet()
     blackjack.dealCards()
+    Debug.spacer()
+    Debug.printAllHands(blackjack)
+    Debug.spacer()
     blackjack.displayCards()
 
     # Make your moves
