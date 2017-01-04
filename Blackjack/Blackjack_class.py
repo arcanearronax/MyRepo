@@ -3,6 +3,10 @@
 # arcanearronax
 # 12/24/2016
 
+from Card_class import *
+from Player_class import *
+from Debug_class import *
+
 import random as r
 import os
 
@@ -16,8 +20,9 @@ class BlackJack:
 		print('Welcome to Black Jack.')
 		self.pot = 0
 		# Go ahead and build these since there's not reason not to now
-		self.dealer = Dealer()
-		self.shoe = Card.shuffle(Card.getDeck(self.numdecks))
+		self.dealer = Dealer(BlackJack.dealerchips)
+		self.shoe = Shoe.shuffle(Shoe.getDeck(self.numdecks))
+		self.players = BlackJack.createPlayers()
 
 	# Values that may need to be used and modified manually
 	numdecks = 4
@@ -31,42 +36,39 @@ class BlackJack:
 	shoe = []
 
 	# Prompt for the number of player and create them sequentially
-	def createPlayers(self):
-		print('How many people will be playing?')
+	def createPlayers():
+		players = []
 		# Need to have some verification to ensure the user input is an int
-		for i in range(int(input())):
-			self.players.append(Player(input('Player {} Name: '.format(i+1))))
-			self.players[i].dealer = self.dealer
+		for i in range(Debug.intput('How many people will be playing?\n')):
+			players.append(Player(input('Player {} Name: '.format(i+1))))
 
-	# Deal cards out to the players and dealers
-	# Should probably update the player class to have it's own draw method
-	def dealCards(self):
-		for i in range(2):
-			for player in self.players:
-				player.hand.append(Card.draw(self.shoe))
-			#BugTracing001: Is there something acting weird with draw? From:displayCards()
-			self.dealer.hand.append(Card.draw(self.shoe))
+		return players
 
 	# Sets each player to the default chip count
 	def distribChips(self):
 		for player in self.players:
 			player.chipcount = self.defaultchips
 
+	# Deal cards out to the players and dealers
+	# Should probably update the player class to have it's own draw method
+	def dealCards(self):
+		for i in range(2):
+			for player in self.players:
+				player.hand.append(Shoe.draw(self.shoe))
+			self.dealer.hand.append(Shoe.draw(self.shoe))
+
 	# This is close to working as I want, need to raise errors appropriately
 	def bet(self):
 		for player in self.players:
-			ans = input(("{}\'s bet: ".format(player.name)))
-			try:
-				chips = int(ans)
-				if player.chipcount >= chips:
-					player.pot += chips
-					player.chipcount -= chips
-				else:
-					print('Insufficient chips to place bet')
-					BlackJack.executeBet(player)
-			except ValueError:
-				print("Invalid input. Please try again.")
-				BlackJack.executeBet(player)
+			ans = intput(("{}\'s bet: ".format(player.name)))
+			while isSufficient(ans) != True:
+				print('Your chipcount is insufficient. Please bet again.')
+				ans = intput(("{}\'s bet: ".format(player.name)))
+
+			player.chipcount -= ans
+			player.pot += ans
+
+# check below here for functions, everything above has been verified to some degree
 
 	# Show the cards for all players and dealer
 	def displayCards(self):
@@ -83,7 +85,7 @@ class BlackJack:
 			player.turn(self.shoe)
 			# Need to see if player wants another card
 			print("{}'s Hand: {}".format(player.name, player.hand))
-			while player.score() < 21:
+			while player.score() < 21 :
 				print("Score1: {}".format(player.score()))
 				print('1. Stay')
 				print('2. Hit')
@@ -121,148 +123,26 @@ class BlackJack:
 			elif player.win == 4:
 				print("{}: Bust".format(player.name))
 
-# Contains card attributes and mathods for handling the object
-class Card:
-	# This is equivalent to a blank card
-	def __init__(self):
-		self.face = ''
-		self.suit = ''
+		def score(self):
+			total = 0
+			acecount = 0
+			for card in self.hand:
+				if card.score() == 'A':
+					acecount += 1
+				else:
+					total += card.score()
+			# This will try to maximize the the ace contribution
+			while acecount > 0:
+				acecount -= 1
+				if acecount + total + 11 <= 21:
+					total += 11
+				else:
+					total += 1
+			return total
 
-	# Need to be able to print out the regular card name
-	def __str__(self):
-		if self.face is '' or self.suit is '':
-			return "blank"
-		else:
-			return self.face + " of " + self.suit
-
-	# In case we need to see the oject itself
-	def __repr__(self):
-		return '({},{})'.format(self.face, self.suit)
-
-	# To be used when using a generator to get cards
-	def convCard(face, suit):
-		card = Card()
-
-		if face is 0:
-			card.face = 'Ace'
-		elif face > 0 and face < 9:
-			card.face = str(face + 1)
-		elif face is 9:
-			card.face = 'Jack'
-		elif face is 10:
-			card.face = 'Queen'
-		elif face is 11:
-			card.face = 'King'
-
-		if suit is 0:
-			card.suit = 'Diamonds'
-		elif suit is 1:
-			card.suit = 'Clubs'
-		elif suit is 2:
-			card.suit = 'Spades'
-		elif suit is 3:
-			card.suit = 'Hearts'
-
-		return card
-
-	# Generate a list of cards as if they were decks from packs
-	def getDeck(numdecks):
-		temp = []
-
-		# I think this is like stuttering recursion
-		# Should probably rewrite this
-		while numdecks > 0:
-			for i in range(12):
-				for j in range(4):
-					temp.append(Card.convCard(i,j))
-			numdecks -= 1
-			if numdecks > 0:
-				temp.append(Card.getDeck(numdecks))
-
-		return temp
-
-	# The cards variable is meant to be a list of Card()
-	# This will reorder the list of cards using an RNG
-	def shuffle(cards):
-		count = len(cards)
-		temp = []
-		shuffled = []
-		for i in range(count):
-			temp.append(i)
-		while len(cards) > 1:
-			rand = r.randint(0, len(cards) - 1)
-			shuffled.append(cards[rand])
-			cards.remove(cards[rand])
-		return shuffled
-
-	# take the bottom card from the shoe/top from the deck (index 0)
-	def draw(deck):
-		#print("Deck: {}".format(deck))
-		card = deck[0]
-		deck.pop(0)
-		return card
-
-	# Need a score to determine card value
-	def score(self):
-		if self.face in ['King', 'Queen', 'Jack']:
-			return 10
-		elif self.face == 'Ace':
-			return 'A'
-		else:
-			return int(self.face)
-
-# This class contains player variables and related functions
-class Player(BlackJack):
-	# Require the player's name be provided when creating the player
-	def __init__(self, name):
-		self.name = name
-		self.chipcount = 0
-		self.hand = []
-		self.splithand = []
-		self.win = 0
-		self.pot = 0
-		self.nomove = True
-		self.cont = True
-		self.blackjack = False
-		self.dealer = ''
-
-	# Just return the player's name
-	def __str__(self):
-		return self.name
-
-	# Print out the player's attribute values as a set of coordinates
-	def __repr__(self):
-		return "({},{},{})".format(self.name, self.chipcount, self.hand)
-
-	# Return the player's chipcount
-	def getChipCount(self):
-		return self.chipcount
-
-	# Print the player's cards to the terminal
-	def showCards(self):
-		print("{}: {} {}".format(self.name, self.hand[0], self.hand[1]))
-
-	# Calculate the player's score
-	def score(player):
-		total = 0
-		acecount = 0
-		for card in player.hand:
-			if card.score() == 'A':
-				acecount += 1
-			else:
-				total += card.score()
-		# This will try to maximize the the ace contribution
-		while acecount > 0:
-			acecount -= 1
-			if acecount + total + 11 <= 21:
-				total += 11
-			else:
-				total += 1
-		return total
-
-	# Seriously...
+	# Figured out a use for this
 	def stay(self):
-		pass
+		self.done = True
 
 	# Need to fix this up a bit more
 	def hit(self, shoe):
@@ -327,71 +207,3 @@ class Player(BlackJack):
 			return True
 		else:
 			return False
-
-	def turn(self, shoe):
-		opts = self.getOpts()
-		for i in range(len(opts)):
-			if opts[i] == 1:
-				if i == 0:
-					print('1. Stay')
-				if i == 1:
-					print('2. Hit')
-				if i == 2:
-					print('3. Double')
-				if i == 3:
-					print('4. Split')
-		choice = Debug.intput(input('Please enter your selection.\n'))
-		if choice == 1:
-			self.stay()
-		if choice == 2:
-			self.hit(shoe)
-		if choice == 3:
-			self.double(shoe)
-		if choice == 4:
-			self.split(shoe)
-
-# Dealer should be created with the same info repeatedly, subclass it
-class Dealer(Player):
-	# Automatically build the dealer
-	def __init__(self):
-		Player.__init__(self, 'Dealer')
-		self.chipcount = BlackJack.dealerchips
-
-	# Reveal the dealer's face down card
-	def reveal(self, shoe):
-		self.hand[1] = Card.draw(shoe)
-
-	# The dealer will need their own turn method
-	def turn(self, shoe):
-		if self.score() == 21:
-			self.blackjack = True
-		elif self.soft(17):
-			self.hit(shoe)
-			#dealer.stay()
-		elif self.score() < 17:
-			while self.score() < 17:
-				self.hit(shoe)
-		elif self.score() >= 17:
-			self.stay()
-
-		print("Dealer Hand: {}".format(self.hand))
-
-# Methods that could be useful for testing and debugging
-class Debug:
-	# Verification stuff
-	# To make sure the user input a number
-	def intput(num):
-		try:
-			num = int(num)
-		except ValueError:
-			num = Debug.intput(input('Invalid entry. Input was not a number, please try again.\n'))
-		return num
-
-	# Testing stuff
-	def printAllHands(blackjack):
-		for player in blackjack.players:
-			print('{}: {}'.format(player.name, player.hand))
-		print('{}: {}'.format('dealer', blackjack.dealer.hand))
-
-	def spacer():
-		print("#\n#\n#\n")

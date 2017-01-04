@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+# Blackjack.py
 # arcanearronax
 # 12/24/2016
 
@@ -13,44 +13,23 @@
 
 # This is just a blackjack game from practice purposes.
 # It should be able to play one player against a dealer.
-from Blackjack_class import *
+from Blackjack_header import *
 
-# Build the game
 blackjack = BlackJack()
-blackjack.createPlayers()
 blackjack.distribChips()
-
-card1 = Card()
-card1.face = 'King'
-card1.suit = 'Spades'
-card2 = Card()
-card2.face = '2'
-card2.suit = 'Spades'
-
-player = Player('player')
-player.hand = [card1, card2]
-
-print("SCORE: {}".format(player.score()))
+blackjack.dealCards()
+blackjack.bet()
+Debug.printAttrs(blackjack)
 
 play = True
 
 while play is True:
     # Bet, deal, and show cards
-    #blackjack.bet()
-    blackjack.dealCards()
-    Debug.spacer()
-    Debug.printAllHands(blackjack)
-    Debug.spacer()
-    blackjack.displayCards()
 
     # Make your moves
-    blackjack.turn()
 
     # The big question
-    blackjack.winner()
-    blackjack.revealwinners()
 
     play = False
 
-print(blackjack.winner)
 print('Program Complete. Testing Below.')
