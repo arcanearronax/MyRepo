@@ -12,9 +12,10 @@ class Player:
         self.splithand = []
 
         self.score = 0
-        self.win = 0
+        self.win = False
         self.pot = 0
         self.splitpot = 0
+        self.splitscore = 0
         self.cont = True
         self.blackjack = False
         self.done = False
@@ -45,3 +46,4 @@ class Dealer(Player):
     def __init__(self, chips):
         Player.__init__(self, 'Dealer')
         self.chipcount = chips
+        self.soft = False

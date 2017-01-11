@@ -70,40 +70,57 @@ class BlackJack:
             player.pot += ans
 
     def turn(self):
+        # Need to show the dealer's card
+        print("Dealer's hand: {}".format(str([self.dealer.hand[0], 'Blank Card'])))
         for player in self.players:
             # Get the player's score at the start of their turn
             BlackJack.getScore(player)
             print("{}'s hand: {}".format(player.name, str(player.hand)))
             print("Score: {}".format(player.score))
-            opts = BlackJack.getOpts(player)
-            # The menu piece
-            for i in range(len(opts)):
-                if opts[i] == True:
-                    if i == 0:
-                        print('1. Stay')
-                    if i == 1:
-                        print('2. Hit')
-                    if i == 2:
-                        print('3. Double')
-                    if i == 3:
-                        print('4. Split')
-            # Handle getting the player choice here
-            choice = Debug.intput("Please select your move: ")
-            # Check the input to see if it's valid
-            while choice > len(opts) or choice < 0 or opts[choice - 1] == False:
-                choice = Debug.intput("Invalid selection. Please select your move: ")
-            # Make the players move
-            if choice == 1:
-                BlackJack.stay(player)
-            elif choice == 2:
-                BlackJack.hit(player)
-                BlackJack.getScore(player)
-                if player.score < 21:
-                    contTurn(player, self.shoe)
-            elif choice == 3:
-                BlackJack.double(player, self.shoe)
-            elif choice == 4:
-                BlackJack.split(player, self.shoe)
+            if player.score < 21:
+                opts = BlackJack.getOpts(player)
+                # The menu piece
+                for i in range(len(opts)):
+                    if opts[i] == True:
+                        if i == 0:
+                            print('1. Stay')
+                        if i == 1:
+                            print('2. Hit')
+                        if i == 2:
+                            print('3. Double')
+                        if i == 3:
+                            print('4. Split')
+                # Handle getting the player choice here
+                choice = Debug.intput("Please select your move: ")
+                # Check the input to see if it's valid
+                while choice > len(opts) or choice < 0 or opts[choice - 1] == False:
+                    choice = Debug.intput("Invalid selection. Please select your move: ")
+                    # Make the players move
+                    if choice == 1:
+                        BlackJack.stay(player)
+                    elif choice == 2:
+                        BlackJack.hit(player, self.shoe, 0)
+                        BlackJack.getScore(player)
+                        print("{}'s hand: {}".format(player.name, str(player.hand)))
+                        if player.score < 21:
+                            BlackJack.contTurn(player, self.shoe)
+                    elif choice == 3:
+                        BlackJack.double(player, self.shoe)
+                        print("DOUBLE")
+                    elif choice == 4:
+                        BlackJack.split(player, self.shoe)
+                        print(player)
+                        print("{}'s hand: {}".format(player.name, str(player.hand)))
+                        print("{}'s split hand: {}".format(player.name, str(player.splithand)))
+                        BlackJack.contTurn(player, self.shoe)
+                    BlackJack.getScore(player)
+            elif player.score == 21:
+                pass
+        # Dealer moves now
+        BlackJack.getScore(self.dealer)
+        while self.dealer.score < 17:
+            BlackJack.hit(self.dealer, self.shoe, 0)
+            BlackJack.getScore(self.dealer)
 
     # This will provide a list of available player moves
     def getOpts(player):
@@ -122,21 +139,64 @@ class BlackJack:
     def stay(player):
         pass
 
-    def hit(player, shoe):
-        print('HIT')
+    def hit(player, shoe, handopt):
+        if handopt == 0:
+            player.hand.append(Shoe.draw(shoe))
+        elif handopt == 1:
+            player.splithand.append(Shoe.draw(shoe))
+        if type(player) == Player:
+            print('HIT')
 
+    # Need to check to make sure the chipcount is valid
     def double(player, shoe):
         player.chipcount -= player.pot
         player.pot *= 2
-        player.hand.append(Shoe.draw(shoe))
+        player.hand = player.hand.append(Shoe.draw(shoe))
+        print("{}'s hand: {}".format(player.name, str(player.hand)))
         print('DOUBLE')
 
+    # Need to build this so it works
     def split(player, shoe):
+        player.splitpot += player.pot
+
+        player.splithand = [player.hand[1]]
+        player.hand.pop(1)
+        player.hand += [Shoe.draw(shoe)]
+        player.splithand += [Shoe.draw(shoe)]
+
         print('SPLIT')
 
     # To be used to after the first player's move
     def contTurn(player, shoe):
-        pass
+        BlackJack.getScore(player)
+        while player.score < 21:
+            print("Score: {}".format(player.score))
+            print('1. Stay')
+            print('2. Hit')
+            choice = Debug.intput("Please select your move: ")
+            while choice != 1 and choice != 2:
+                choice = Debug.intput("Invalid selection. Please select your move: ")
+            if choice == 1:
+                BlackJack.stay(player)
+                break
+            else:
+                BlackJack.hit(player, shoe, 0)
+            BlackJack.getScore(player)
+        if len(player.splithand) >=2:
+            while player.splitscore < 21:
+                print("{}'s split hand: {}".format(player.name, str(player.splithand)))
+                print("Split Score: {}".format(player.splitscore))
+                print('1. Stay')
+                print('2. Hit')
+                choice = Debug.intput("Please select your move: ")
+                while choice != 1 and choice != 2:
+                    choice = Debug.intput("Invalid selection. Please select your move: ")
+                if choice == 1:
+                    BlackJack.stay(player)
+                    break
+                else:
+                    BlackJack.hit(player, shoe, 1)
+                BlackJack.getScore(player)
 
     # An ace will return as 'A' rather than 11, to keep track more effectively
     def getScore(player):
@@ -148,7 +208,7 @@ class BlackJack:
                 acount += 1
             else:
                 score += temp
-        # Not sure if this would work for acount = 0
+                # Not sure if this would work for acount = 0
         for i in range(acount):
             if score <= 10:
                 score += 11
@@ -158,88 +218,119 @@ class BlackJack:
                 acount -= 1
         player.score = score
 
-#
-#
-# check below here for functions, everything above has been verified to some degree
-#
-#
-
-    # Show the cards for all players and dealer
-    def displayCards(self):
-        for player in self.players:
-            print("{}'s Hand: {}".format(player.name, player.hand))
-        # BugTracing001: dealer has decks as hands, why were they place in had?
-        print("{}'s Hand: {}".format(self.dealer.name, self.dealer.hand))
-
-    # This has each player take their turn sequentially, then the dealer. It
-    # does the looping itself
-
-
-    # Currently checks with the single player to see if they want to
-    # play another hand
-    def keepplaying(player):
-        print('You have {} chips.\n'.format(player.chipcount))
-        if input('Would you like to keep playing?\n') == 'y':
-            return True
-        else:
-            return False
-            print('Thank you for playing.\n')
+        # Need to handle the split hand score too
+        if len(player.splithand) >= 2:
+            score = 0
+            acount = 0
+            for card in player.splithand:
+                temp = card.score()
+                if type(temp) == str:
+                    acount += 1
+                else:
+                    score += temp
+            for i in range(acount):
+                if score <= 10:
+                    score += 11
+                    acount -= 1
+            player.splitscore = score
 
     def winner(self):
+        print("Dealer's Hand: {}".format(str(self.dealer.hand)))
+        BlackJack.getScore(self.dealer)
         for player in self.players:
-            player.winner()
-
-    def revealwinners(self):
-        for player in self.players:
-            if player.win == 0:
-                print("{}: Draw".format(player.name))
-            elif player.win == 1:
-                print("{}: Blackjack".format(player.name))
-            elif player.win == 2:
-                print("{}: Win".format(player.name))
-            elif player.win == 3:
-                print("{}: Lose".format(player.name))
-            elif player.win == 4:
-                print("{}: Bust".format(player.name))
-
-        def score(self):
-            total = 0
-            acecount = 0
-            for card in self.hand:
-                if card.score() == 'A':
-                    acecount += 1
+            print("{}'s hand: {}".format(player.name, str(player.hand)))
+            BlackJack.getScore(player)
+            if player.blackjack == True:
+                if self.dealer.blackjack == True:
+                    player.win = False
+                    print("{} loses 1.".format(player.name))
+                    self.payout(player)
+                    print("Remaining Chips: {}".format(player.chipcount))
                 else:
-                    total += card.score()
-            # This will try to maximize the the ace contribution
-            while acecount > 0:
-                acecount -= 1
-                if acecount + total + 11 <= 21:
-                    total += 11
+                    player.win = True
+                    print("{} wins 1.".format(player.name))
+                    self.payout(player)
+                    print("Remaining Chips: {}".format(player.chipcount))
+            else:
+                if player.score > 21:
+                    player.win = False
+                    print("{} loses 2.".format(player.name))
+                    self.payout(player)
+                    print("Remaining Chips: {}".format(player.chipcount))
                 else:
-                    total += 1
-            return total
+                    if self.dealer.score > 21:
+                        player.win = True
+                        print("{} wins 2.".format(player.name))
+                        self.payout(player)
+                        print("Remaining Chips: {}".format(player.chipcount))
+                    elif self.dealer.score == player.score:
+                        player.win = False
+                        print("{} loses 3.".format(player.name))
+                        self.payout(player)
+                        print("Remaining Chips: {}".format(player.chipcount))
+                    elif self.dealer.score > player.score:
+                        player.win = False
+                        print("{} loses 3.".format(player.name))
+                        self.payout(player)
+                        print("Remaining Chips: {}".format(player.chipcount))
+                    else:
+                        player.win = True
+                        print("{} wins 4.".format(player.name))
+                        self.payout(player)
+                        print("Remaining Chips: {}".format(player.chipcount))
 
-    # win = 0 --> no winner determined/draw
-    # win = 1 --> player blackjack
-    # win = 2 --> player wins
-    # win = 3 --> dealer wins
-    def winner(self):
-        #pscore = self.score()
-        #dscore = self.dealer.score()
-        if self.blackjack == True:
-            self.win = 1
-        elif self.score() > self.dealer.score():
-            self.win = 2
-        elif self.score() < self.dealer.score():
-            self.win = 3
-
-    def soft(self, num):
-        ace = False
-        for card in self.hand:
-            if card.face == 'Ace':
-                ace = True
-                break
-        if ace == True and self.score - 11 == num:
-            return True
+    def payout(self, player):
+        if player.win == False:
+            self.dealer.chipcount += player.pot
+            player.pot = 0
         else:
-            return False
+            # Pick up here
+            if player.blackjack == True:
+                if self.dealer.blackjack == True:
+                    player.chipcount += player.pot
+                else:
+                    player.chipcount += int(player.pot * 1.5)
+            else:
+                if self.dealer.blackjack == True:
+                    self.dealer.chipcount += player.pot
+                    player.pot = 0
+                else:
+                    if player.score > 21:
+                        if self.dealer.score > 21:
+                            player.pot = 0
+                        else:
+                            self.dealer.chipcount += player.pot
+                            player.pot = 0
+                    else:
+                        if self.dealer.score > 21:
+                            player.chipcount += player.pot * 2
+                            player.pot = 0
+                        elif self.dealer.score > player.score:
+                            self.dealer.chipcount += player.pot
+                        else:
+                            player.chipcount += player.pot * 2
+                            player.pot = 0
+
+    def playAgain(self):
+        # Need a menu here
+        print('Please select an option')
+        print('1. Keep Playing')
+        print('2. Reset Players')
+        print('3. Quit Game')
+        choice = Debug.intput('')
+
+        # Clear the players' hands
+        for player in self.players:
+            player.hand = []
+            player.splithand = []
+        self.dealer.hand = []
+        # Handle the player's choice here
+        if choice == 1:
+            play = True
+        elif choice == 2:
+            self.players = BlackJack.createPlayers()
+            play = True
+        elif choice == 3:
+            play = False
+            print ('Thanks for playing.')
+        return play

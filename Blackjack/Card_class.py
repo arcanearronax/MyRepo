@@ -75,7 +75,7 @@ class Shoe:
                     temp.append(Card.convCard(i,j))
             numdecks -= 1
             if numdecks > 0:
-                temp.append(Shoe.getDeck(numdecks))
+                temp += Shoe.getDeck(numdecks)
 
         return temp
 
