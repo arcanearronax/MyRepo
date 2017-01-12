@@ -96,23 +96,20 @@ class BlackJack:
                 while choice > len(opts) or choice < 0 or opts[choice - 1] == False:
                     choice = Debug.intput("Invalid selection. Please select your move: ")
                     # Make the players move
-                    if choice == 1:
-                        BlackJack.stay(player)
-                    elif choice == 2:
-                        BlackJack.hit(player, self.shoe, 0)
-                        BlackJack.getScore(player)
-                        print("{}'s hand: {}".format(player.name, str(player.hand)))
-                        if player.score < 21:
-                            BlackJack.contTurn(player, self.shoe)
-                    elif choice == 3:
-                        BlackJack.double(player, self.shoe)
-                        print("DOUBLE")
-                    elif choice == 4:
-                        BlackJack.split(player, self.shoe)
-                        print(player)
-                        print("{}'s hand: {}".format(player.name, str(player.hand)))
-                        print("{}'s split hand: {}".format(player.name, str(player.splithand)))
+                if choice == 1:
+                    BlackJack.stay(player)
+                elif choice == 2:
+                    BlackJack.hit(player, self.shoe, 0)
+                    BlackJack.getScore(player)
+                    if player.score < 21:
                         BlackJack.contTurn(player, self.shoe)
+                    else:
+                        BlackJack.printHand(player, 1)
+                elif choice == 3:
+                    BlackJack.double(player, self.shoe)
+                elif choice == 4:
+                    BlackJack.split(player, self.shoe)
+                    BlackJack.contTurn(player, self.shoe)
                     BlackJack.getScore(player)
             elif player.score == 21:
                 pass
@@ -151,7 +148,7 @@ class BlackJack:
     def double(player, shoe):
         player.chipcount -= player.pot
         player.pot *= 2
-        player.hand = player.hand.append(Shoe.draw(shoe))
+        player.hand.append(Shoe.draw(shoe))
         print("{}'s hand: {}".format(player.name, str(player.hand)))
         print('DOUBLE')
 
@@ -170,6 +167,7 @@ class BlackJack:
     def contTurn(player, shoe):
         BlackJack.getScore(player)
         while player.score < 21:
+            BlackJack.printHand(player, 1)
             print("Score: {}".format(player.score))
             print('1. Stay')
             print('2. Hit')
@@ -184,7 +182,7 @@ class BlackJack:
             BlackJack.getScore(player)
         if len(player.splithand) >=2:
             while player.splitscore < 21:
-                print("{}'s split hand: {}".format(player.name, str(player.splithand)))
+                BlackJack.printHand(player, 2)
                 print("Split Score: {}".format(player.splitscore))
                 print('1. Stay')
                 print('2. Hit')
@@ -240,44 +238,36 @@ class BlackJack:
         for player in self.players:
             print("{}'s hand: {}".format(player.name, str(player.hand)))
             BlackJack.getScore(player)
-            if player.blackjack == True:
+            if len(player.hand) == 2 and player.score == 21:
                 if self.dealer.blackjack == True:
-                    player.win = False
-                    print("{} loses 1.".format(player.name))
-                    self.payout(player)
+                    print("{} breaks even 1.".format(player.name))
+                    player.chipcount += player.pot
                     print("Remaining Chips: {}".format(player.chipcount))
                 else:
-                    player.win = True
                     print("{} wins 1.".format(player.name))
-                    self.payout(player)
+                    player.chipcount += int(player.pot * 2.5)
                     print("Remaining Chips: {}".format(player.chipcount))
             else:
                 if player.score > 21:
-                    player.win = False
                     print("{} loses 2.".format(player.name))
-                    self.payout(player)
                     print("Remaining Chips: {}".format(player.chipcount))
                 else:
                     if self.dealer.score > 21:
-                        player.win = True
                         print("{} wins 2.".format(player.name))
-                        self.payout(player)
+                        player.chipcount += player.pot * 2
                         print("Remaining Chips: {}".format(player.chipcount))
                     elif self.dealer.score == player.score:
-                        player.win = False
-                        print("{} loses 3.".format(player.name))
-                        self.payout(player)
+                        print("{} breaks even 2.".format(player.name))
+                        player.chipcount += player.pot
                         print("Remaining Chips: {}".format(player.chipcount))
                     elif self.dealer.score > player.score:
-                        player.win = False
                         print("{} loses 3.".format(player.name))
-                        self.payout(player)
                         print("Remaining Chips: {}".format(player.chipcount))
                     else:
-                        player.win = True
                         print("{} wins 4.".format(player.name))
-                        self.payout(player)
+                        player.chipcount += player.pot * 2
                         print("Remaining Chips: {}".format(player.chipcount))
+            player.pot = 0
 
     def payout(self, player):
         if player.win == False:
@@ -312,6 +302,11 @@ class BlackJack:
                             player.pot = 0
 
     def playAgain(self):
+        # Kick any players who are broke
+        for player in self.players:
+            if player.chipcount == 0:
+                print("{} is broke. Please leave the table.".format(player.name))
+                self.players.remove(player)
         # Need a menu here
         print('Please select an option')
         print('1. Keep Playing')
@@ -324,13 +319,26 @@ class BlackJack:
             player.hand = []
             player.splithand = []
         self.dealer.hand = []
+
         # Handle the player's choice here
         if choice == 1:
             play = True
-        elif choice == 2:
+            if len(self.players) == 0:
+                choice = 2
+        if choice == 2:
             self.players = BlackJack.createPlayers()
+            self.distribChips()
             play = True
         elif choice == 3:
             play = False
             print ('Thanks for playing.')
         return play
+
+    def printHand(player, selection):
+        if selection == 0:
+            print("{}'s hand: {}".format(player.name, str(player.hand)))
+            print("{}'s split hand: {}".format(player.name, str(player.splithand)))
+        if selection == 1:
+            print("{}'s hand: {}".format(player.name, str(player.hand)))
+        if selection == 2:
+            print("{}'s split hand: {}".format(player.name, str(player.splithand)))
