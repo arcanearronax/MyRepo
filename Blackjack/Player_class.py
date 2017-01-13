@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Player_class.py
 # arcanearronax
-# This class contains player variables and related functions
+# 01/13/2017
 
 class Player:
     # Require the player's name be provided when creating the player
@@ -12,13 +12,10 @@ class Player:
         self.splithand = []
 
         self.score = 0
-        self.win = False
         self.pot = 0
         self.splitpot = 0
         self.splitscore = 0
-        self.cont = True
         self.blackjack = False
-        self.done = False
 
     # Just return the player's name
     def __str__(self):

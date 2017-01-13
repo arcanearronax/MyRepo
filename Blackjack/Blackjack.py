@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Blackjack.py
 # arcanearronax
-# 12/24/2016
+# 01/13/2017
 
 ########################################################################
 ##  BBB     L        A     CCCC   K  K   JJJJJ     A    CCCC    K  K  ##
@@ -11,32 +11,35 @@
 ##  BBB   LLLL  A    A    CCCC    K  K    J   A    A    CCCC    K  K  ##
 ########################################################################
 
-# This is just a blackjack game from practice purposes.
-# It should be able to play one player against a dealer.
+# This is just a blackjack game that I made to practice using python and more
+# specifically building classes. I plan to work on it continuously and make
+# additions and changes.
+
+# This program will create a blackjack game and cycle through the different
+# parts of a blackjack game until the loop is broken.
+
+# At this point I'm pretty sure I don't even need the header file, but I'm gonna
+# keep it since it's not hurting anything.
 from Blackjack_header import *
 
+#  Start the game and set the break variable
 blackjack = BlackJack()
-blackjack.distribChips()
-
 play = True
 
 while play is True:
-    # Bet
+    # Get the players' bets
     blackjack.bet()
-    #Debug.printAttrs(blackjack)
 
-    # Deal
+    # Deal out the cards to players
     blackjack.dealCards()
-    #Debug.printAttrs(blackjack)
 
-    # Turn
+    # Have the players make their moves
     blackjack.turn()
-    #Debug.printAttrs(blackjack)
 
-    # Finish up the hand
+    # Figure out who wins and payout chips
     blackjack.winner()
-    #Debug.printAttrs(blackjack)
 
+    # Handle changing players, playing again, and exiting
     play = blackjack.playAgain()
 
-print('Program Complete. Testing Below.')
+print('Program Complete.')

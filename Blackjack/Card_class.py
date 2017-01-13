@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Card_class.py
 # arcanearronax
-# Contains card attributes and mathods for handling the object
+# 01/13/2017
 
 import random as r
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Debug_class.py
 # arcanearronax
-# Methods that could be useful for testing and debugging
+# 01/13/2017
 
 from Blackjack_class import *
 from Card_class import *
