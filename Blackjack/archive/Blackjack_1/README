@@ -11,6 +11,4 @@ Default Values:
 Simply execute Blackjack.py with Python 3.5.2 and follow the game's prompts.
 The default game values can be changed at the top of the BlackJack class.
 
-Check the archive for the most recent functioning version, the folders will be
-sequentially numbered. The current directory is being used as my working
-directory.
+This version is the first one I consider to be fully functioning. I'm storing this here since it seems like an important enough point to specifially save.
