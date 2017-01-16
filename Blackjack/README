@@ -1,0 +1,11 @@
+This game is capable of hosting a single player or "hotseat" multiplayer
+blackjack game. Currently it has the necessary pieces to play in full but will
+need some tweaking to be easier to read while playing. I'll also end up making a handful of additional changes.
+
+Default Values:
+	Player Chips - 1000
+	Table Minimun - 100
+	Table Maximum - 500
+	Num of Decks - 4
+
+Simply execute Blackjack.py with Python 3.5.2 and follow the game's prompts.
