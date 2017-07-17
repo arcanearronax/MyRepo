@@ -1,0 +1,49 @@
+This file is just to be used for notes I take while testing. These will also need to be compiled later in order to write up a manual or readme.
+
+Class Card:
+  A new Card is will always have null elements.
+  If either element is null both must be null.
+  Four suits are available, standard card deck options.
+  Thirteen faces values are available, standard card deck options (no Jacks).
+  Face cards will be spelled out in full.
+  Card element values are to be capitalized.
+
+  Method __str__(self):
+    If both elements are null then the card is "Blank Card".
+    If both elements are not null, it will return "[card.face] of [card.suit]" as a string.
+
+  Method __repr__(self):
+    Returns the string "([card.face],[card.suit])".
+    If element values are null, 'null' will be used in their place.
+    Used to record the status of a card at an instant for logging and printing.
+
+  Method convCard(face, suit):
+    face in [0,12] and suit in [0,3].
+    Returns a Card object with element values corresponding to the int values passed.
+    Raise ValueError if face and/or suit are out of bounds.
+    Sets card element values as strings.
+
+  Method score(self):
+    Return the point value of the card for Black Jack.
+    Return an int for all numeric, Jack, King, and Queen.
+    Return 'A' for an Ace.
+
+Class Shoe:
+  Creates an array of Card objects.
+
+  Method __init__(self, numdecks):
+    Create an instance of Shoe.
+    The cards element is an array of Card objects based on numdecks.
+    This relies on Shoe.getDeck(numdecks).
+
+  Method getDeck(numdecks):
+    This returns an array of Card objects where the Card objects make up a deck of cards.
+    This relies of Card.convCard(face, suit).
+
+  Method suffle(cards):
+    This returns an array of cards in a randomized order.
+    This relies on Random.randint(min_int, max_int).
+
+  Method draw(shoe):
+    Return the index 0 Card object in a Shoe.
+    Remove the index 0 Card object from the Shoe.

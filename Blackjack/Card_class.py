@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Card_class.py
 # arcanearronax
-# 01/13/2017
+# 07/16/2017
 
 import random as r
 
@@ -14,28 +14,34 @@ class Card:
 
     # Need to be able to print out the regular card name
     def __str__(self):
-        if self.face is '' or self.suit is '':
-            return "blank"
+        if self.face == '' or self.suit == '':
+            return "Blank Card"
         else:
             return self.face + " of " + self.suit
 
     # In case we need to see the oject itself
     def __repr__(self):
-        return '({},{})'.format(self.face, self.suit)
+        if (self.face != '') and (self.suit != ''):
+            return '(\'{}\',\'{}\')'.format(self.face, self.suit)
+        else:
+            return '(\'null\',\'null\')'
 
     # To be used when using a generator to get cards
     def convCard(face, suit):
         card = Card()
 
+        if (face < 0 or face > 12) or (suit < 0 or suit > 3):
+            raise ValueError("Card.convCard: face - " + str(face) + " : suit - " + str(suit))
+
         if face is 0:
             card.face = 'Ace'
-        elif face > 0 and face < 9:
+        elif face > 0 and face < 10:
             card.face = str(face + 1)
-        elif face is 9:
-            card.face = 'Jack'
         elif face is 10:
-            card.face = 'Queen'
+            card.face = 'Jack'
         elif face is 11:
+            card.face = 'Queen'
+        elif face is 12:
             card.face = 'King'
 
         if suit is 0:
